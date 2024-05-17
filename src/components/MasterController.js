@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { faRobot, faWandMagicSparkles, faBars, faTimes, faUpload, faMapMarkerAlt, faMapLocationDot, faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faRobot, faWandMagicSparkles, faBars, faTimes, faUpload, faMapMarkerAlt, 
+    faMapLocationDot, faDownload, faKitchenSet, faDumpster, faBatteryHalf, faChair, 
+    faLocationCrosshairs, faCircleStop } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import ConnectDevice from './ConnectDevice';
 import ConfirmationButton from './ConfirmationButton';
@@ -39,116 +41,178 @@ const MasterController = () => {
             </div>
             <div className="grid w-full lg:w-1/6 card bg-[#1E2328] rounded-box place-items-center my-2 mx-2 shadow-xl p-4">
                 {!showControl && (
-                <div className="flex flex-col w-full h-full pt-4">
-                    <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold dark:text-[#6AFFDC] my-2">Initialization</h2>
-                    <div className="divider"></div>
-                    <ul className="menu rounded-box">
-                        <li>
-                            <details>
-                                <summary className='dark:text-[#DCEBFA] mb-1 text-lg'>
-                                    <FontAwesomeIcon icon={faMapLocationDot} className="mr-2" />
-                                    Generate Map
-                                </summary>
-                                <ul>
-                                    <li>
-                                        <ConfirmationButton
-                                            onClick={() => console.log('Map 1')}
-                                            label="Map 1"
-                                            modalTitle="Map 1"
-                                            modalDescription="Are you sure you want to generate Map 1?"
-                                            btn_class='btn btn-ghost dark:text-[#DCEBFA] mb-1'
-                                            text_dt='flex flex-row w-full text-left text-base items-center'
-                                        />
-                                    </li>
-                                    <li>
-                                        <ConfirmationButton
-                                            onClick={() => console.log('Map 2')}
-                                            label="Map 2"
-                                            modalTitle="Map 2"
-                                            modalDescription="Are you sure you want to generate Map 2?"
-                                            btn_class='btn btn-ghost dark:text-[#DCEBFA] mb-1'
-                                            text_dt='flex flex-row w-full text-left text-base items-center'
-                                        />
-                                    </li>
-                                    <li>
-                                        <ConfirmationButton
-                                            onClick={() => console.log('Map 3')}
-                                            label="Map 3"
-                                            modalTitle="Map 3"
-                                            modalDescription="Are you sure you want to generate Map 3?"
-                                            btn_class='btn btn-ghost dark:text-[#DCEBFA] mb-1'
-                                            text_dt='flex flex-row w-full text-left text-base items-center'
-                                        />
-                                    </li>
-                                </ul>
-                            </details>
-                        </li>
-                        <li>
-                            <ConfirmationButton
-                                onClick={() => console.log('Save Map')}
-                                label="Save Map"
-                                modalTitle="Save Map"
-                                modalDescription="Are you sure you want to Save Map?"
-                                btn_class='btn btn-ghost dark:text-[#DCEBFA] mb-1'
-                                text_dt='flex flex-row w-full text-left text-lg items-center'
-                                icond={faUpload}
-                            />
-                        </li>
-                        <li>
-                            <details>
-                                <summary className='dark:text-[#DCEBFA] mb-1 text-lg'>
-                                    <FontAwesomeIcon icon={faDownload} className="mr-2" />
-                                    Load Map
-                                </summary>
-                                <ul>
-                                    <li>
-                                        <ConfirmationButton
-                                            onClick={() => console.log('Map 1')}
-                                            label="Map 1"
-                                            modalTitle="Map 1"
-                                            modalDescription="Are you sure you want to load Map 1?"
-                                            btn_class='btn btn-ghost dark:text-[#DCEBFA] mb-1'
-                                            text_dt='flex flex-row w-full text-left text-base items-center'
-                                        />
-                                    </li>
-                                    <li>
-                                        <ConfirmationButton
-                                            onClick={() => console.log('Map 2')}
-                                            label="Map 2"
-                                            modalTitle="Map 2"
-                                            modalDescription="Are you sure you want to load Map 2?"
-                                            btn_class='btn btn-ghost dark:text-[#DCEBFA] mb-1'
-                                            text_dt='flex flex-row w-full text-left text-base items-center'
-                                        />
-                                    </li>
-                                    <li>
-                                        <ConfirmationButton
-                                            onClick={() => console.log('Map 3')}
-                                            label="Map 3"
-                                            modalTitle="Map 3"
-                                            modalDescription="Are you sure you want to load Map 3?"
-                                            btn_class='btn btn-ghost dark:text-[#DCEBFA] mb-1'
-                                            text_dt='flex flex-row w-full text-left text-base items-center'
-                                        />
-                                    </li>
-                                </ul>
-                            </details>
-                        </li>
-                        <li>
-                            <ConfirmationButton
-                                onClick={() => console.log('Reposition')}
-                                label="Reposition"
-                                modalTitle="Reposition"
-                                modalDescription="Are you sure you want to Reposition?"
-                                btn_class='btn btn-ghost dark:text-[#DCEBFA]'
-                                text_dt='flex flex-row w-full text-left text-lg items-center'
-                                icond={faMapMarkerAlt}
-                            />
-                        </li>
-                    </ul>
-                    <div className="divider"></div>
-                    <JoyStickControl />
-                </div>)}
+                    <div className="flex flex-col w-full h-full pt-4">
+                        <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold dark:text-[#6AFFDC] my-2">Initialization</h2>
+                        <div className="divider"></div>
+                        <ul className="menu rounded-box">
+                            <li>
+                                <details>
+                                    <summary className='dark:text-[#DCEBFA] mb-1 text-lg'>
+                                        <FontAwesomeIcon icon={faMapLocationDot} className="mr-2" />
+                                        Generate Map
+                                    </summary>
+                                    <ul>
+                                        <li>
+                                            <ConfirmationButton
+                                                onClick={() => console.log('Map 1')}
+                                                label="Map 1"
+                                                modalTitle="Map 1"
+                                                modalDescription="Are you sure you want to generate Map 1?"
+                                                btn_class='btn btn-ghost dark:text-[#DCEBFA] mb-1'
+                                                text_dt='flex flex-row w-full text-left text-base items-center'
+                                            />
+                                        </li>
+                                        <li>
+                                            <ConfirmationButton
+                                                onClick={() => console.log('Map 2')}
+                                                label="Map 2"
+                                                modalTitle="Map 2"
+                                                modalDescription="Are you sure you want to generate Map 2?"
+                                                btn_class='btn btn-ghost dark:text-[#DCEBFA] mb-1'
+                                                text_dt='flex flex-row w-full text-left text-base items-center'
+                                            />
+                                        </li>
+                                        <li>
+                                            <ConfirmationButton
+                                                onClick={() => console.log('Map 3')}
+                                                label="Map 3"
+                                                modalTitle="Map 3"
+                                                modalDescription="Are you sure you want to generate Map 3?"
+                                                btn_class='btn btn-ghost dark:text-[#DCEBFA] mb-1'
+                                                text_dt='flex flex-row w-full text-left text-base items-center'
+                                            />
+                                        </li>
+                                    </ul>
+                                </details>
+                            </li>
+                            <li>
+                                <ConfirmationButton
+                                    onClick={() => console.log('Save Map')}
+                                    label="Save Map"
+                                    modalTitle="Save Map"
+                                    modalDescription="Are you sure you want to Save Map?"
+                                    btn_class='btn btn-ghost dark:text-[#DCEBFA] mb-1'
+                                    text_dt='flex flex-row w-full text-left text-lg items-center'
+                                    icond={faUpload}
+                                />
+                            </li>
+                            <li>
+                                <details>
+                                    <summary className='dark:text-[#DCEBFA] mb-1 text-lg'>
+                                        <FontAwesomeIcon icon={faDownload} className="mr-2" />
+                                        Load Map
+                                    </summary>
+                                    <ul>
+                                        <li>
+                                            <ConfirmationButton
+                                                onClick={() => console.log('Map 1')}
+                                                label="Map 1"
+                                                modalTitle="Map 1"
+                                                modalDescription="Are you sure you want to load Map 1?"
+                                                btn_class='btn btn-ghost dark:text-[#DCEBFA] mb-1'
+                                                text_dt='flex flex-row w-full text-left text-base items-center'
+                                            />
+                                        </li>
+                                        <li>
+                                            <ConfirmationButton
+                                                onClick={() => console.log('Map 2')}
+                                                label="Map 2"
+                                                modalTitle="Map 2"
+                                                modalDescription="Are you sure you want to load Map 2?"
+                                                btn_class='btn btn-ghost dark:text-[#DCEBFA] mb-1'
+                                                text_dt='flex flex-row w-full text-left text-base items-center'
+                                            />
+                                        </li>
+                                        <li>
+                                            <ConfirmationButton
+                                                onClick={() => console.log('Map 3')}
+                                                label="Map 3"
+                                                modalTitle="Map 3"
+                                                modalDescription="Are you sure you want to load Map 3?"
+                                                btn_class='btn btn-ghost dark:text-[#DCEBFA] mb-1'
+                                                text_dt='flex flex-row w-full text-left text-base items-center'
+                                            />
+                                        </li>
+                                    </ul>
+                                </details>
+                            </li>
+                            <li>
+                                <ConfirmationButton
+                                    onClick={() => console.log('Reposition')}
+                                    label="Reposition"
+                                    modalTitle="Reposition"
+                                    modalDescription="Are you sure you want to Reposition?"
+                                    btn_class='btn btn-ghost dark:text-[#DCEBFA]'
+                                    text_dt='flex flex-row w-full text-left text-lg items-center'
+                                    icond={faMapMarkerAlt}
+                                />
+                            </li>
+                        </ul>
+                        <div className="divider"></div>
+                        <JoyStickControl />
+                    </div>)}
+                {showControl && (
+                    <div className="flex flex-col p-4 w-full h-full">
+                        <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold dark:text-[#6AFFDC] my-2">Control</h2>
+                        <div className="divider"></div>
+                        <ConfirmationButton
+                            onClick={() => console.log('Kitchen')}
+                            label="Go to Kitchen"
+                            modalTitle="Go to Kitchen"
+                            modalDescription="Are you sure you want to Go to Kitchen?"
+                            btn_class='btn btn-ghost dark:text-[#DCEBFA]'
+                            text_dt='flex flex-row w-full text-left text-lg items-center'
+                            icond={faKitchenSet}
+                        />
+                        <ConfirmationButton
+                            onClick={() => console.log('Recycle')}
+                            label="Go to Recycle"
+                            modalTitle="Go to Recycle"
+                            modalDescription="Are you sure you want to Go to Recycle?"
+                            btn_class='btn btn-ghost dark:text-[#DCEBFA]'
+                            text_dt='flex flex-row w-full text-left text-lg items-center'
+                            icond={faDumpster}
+                        />
+                        <ConfirmationButton
+                            onClick={() => console.log('Charger')}
+                            label="Go to Charger"
+                            modalTitle="Go to Charger"
+                            modalDescription="Are you sure you want to Go to Charger?"
+                            btn_class='btn btn-ghost dark:text-[#DCEBFA]'
+                            text_dt='flex flex-row w-full text-left text-lg items-center'
+                            icond={faBatteryHalf}
+                        />
+                        <ConfirmationButton
+                            onClick={() => console.log('Table')}
+                            label="Go to Table"
+                            modalTitle="Go to Table"
+                            modalDescription="Are you sure you want to Go to Table?"
+                            btn_class='btn btn-ghost dark:text-[#DCEBFA]'
+                            text_dt='flex flex-row w-full text-left text-lg items-center'
+                            icond={faChair}
+                        />
+                        <ConfirmationButton
+                            onClick={() => console.log('Custom')}
+                            label="Custom Waypoint"
+                            modalTitle="Custom Waypoint"
+                            modalDescription="Are you sure you want to Go to Custom Waypoint?"
+                            btn_class='btn btn-ghost dark:text-[#DCEBFA]'
+                            text_dt='flex flex-row w-full text-left text-lg items-center'
+                            icond={faLocationCrosshairs}
+                        />
+                        <div className="divider"></div>
+                        <JoyStickControl />
+                        <div className='divider'></div>
+                        <ConfirmationButton
+                            onClick={() => console.log('Stop')}
+                            label="Stop"
+                            modalTitle="Stop"
+                            modalDescription="Are you sure you want to stop?"
+                            btn_class='btn btn-error btn-outline dark:text-[#DCEBFA] text-center'
+                            text_dt='flex flex-row text-2xl items-center'
+                            icond={faCircleStop}
+                        />
+                    </div>)}
             </div>
             <div className="grid w-full lg:w-4/6 card bg-[#1E2328] rounded-box place-items-center my-2 mx-1 shadow-xl p-4">
                 content
