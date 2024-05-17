@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { faRobot, faWandMagicSparkles, faBars, faTimes, faUpload, faMapMarkerAlt, faMapLocationDot, faDownload, faKitchenSet, faDumpster, faBatteryHalf, faChair, faLocationCrosshairs, faCircleStop, faMap } from '@fortawesome/free-solid-svg-icons';
+import { faRobot, faWandMagicSparkles, faBars, faTimes, faUpload, faMapMarkerAlt, faMapLocationDot, faDownload, faKitchenSet, faDumpster, faBatteryHalf, faChair, faLocationCrosshairs, faCircleStop, faMap, faSave, faDeleteLeft, faCircle } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import ConnectDevice from './ConnectDevice';
 import ConfirmationButton from './ConfirmationButton';
@@ -7,30 +7,37 @@ import JoyStickControl from './JoyStickControl';
 import SlamMapVisualization from './Mapping';
 import ROSLIB from 'roslib';
 
+import robotIcon from '../Icons/robot.png';
+import kitchenIcon from '../Icons/cooking.png';
+import chargingStationIcon from '../Icons/charger.png';
+import tableIcon from '../Icons/table.png';
+import recycleIcon from '../Icons/recycle-bin.png';
+import repositionIcon from '../Icons/reposition.png';
+
 const Modal = ({ isOpen, onClose, onSubmit }) => {
     const [tableNumber, setTableNumber] = useState('');
-  
+
     return (
-      isOpen && (
-        <div className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg">Enter Table Number</h3>
-            <input
-              type="text"
-              placeholder="Table number"
-              className="input input-bordered w-full max-w-xs"
-              value={tableNumber}
-              onChange={(e) => setTableNumber(e.target.value)}
-            />
-            <div className="modal-action">
-              <button className="btn" onClick={() => onSubmit(tableNumber)}>Submit</button>
-              <button className="btn" onClick={onClose}>Close</button>
+        isOpen && (
+            <div className="modal modal-open">
+                <div className="modal-box">
+                    <h3 className="font-bold text-lg">Enter Table Number</h3>
+                    <input
+                        type="text"
+                        placeholder="Table number"
+                        className="input input-bordered w-full max-w-xs"
+                        value={tableNumber}
+                        onChange={(e) => setTableNumber(e.target.value)}
+                    />
+                    <div className="modal-action">
+                        <button className="btn" onClick={() => onSubmit(tableNumber)}>Submit</button>
+                        <button className="btn" onClick={onClose}>Close</button>
+                    </div>
+                </div>
             </div>
-          </div>
-        </div>
-      )
+        )
     );
-  };
+};
 const MasterController = () => {
     const [isDrawerOpen, setIsDrawerOpen] = useState(true);
     const [showControl, setShowControl] = useState(false);
@@ -308,29 +315,107 @@ const MasterController = () => {
             </div>
             <div className="grid w-full lg:w-1/6 card bg-[#1E2328] rounded-box place-items-center my-2 mx-2 shadow-xl p-4">
                 {isEditingMap && (
-                    <div className='' style={{ display: 'flex', flexDirection: 'column' }}>
-                        <button className='mx-10 mb-5 btn btn-outline btn-lg bg-red-500 z-[4] text-white' onClick={() => slamMapRef.current.addKitchen()}>
-                            Add Kitchen
+                    <div className='w-full h-full' style={{ display: 'flex', flexDirection: 'column' }}>
+                        <button
+                            onClick={() => slamMapRef.current.addKitchen()}
+                            className='btn btn-ghost dark:text-[#DCEBFA]'>
+                            <div className='flex flex-row w-full text-left text-lg items-center'>
+                                <img src={kitchenIcon} alt="Icon" style={{ width: '20px', marginRight: '5px' }} />
+                                <div className='mx-2'>
+                                    Add Kitchen
+                                </div>
+                            </div>
                         </button>
-                        <button className='mx-10 mb-5 btn btn-outline btn-lg bg-blue-500 z-[4] text-white' onClick={() => slamMapRef.current.addChargingStation()}>
-                            Add Charging Station
+                        <button
+                            onClick={() => slamMapRef.current.addChargingStation()}
+                            className='btn btn-ghost dark:text-[#DCEBFA]'
+                        >
+                            <div className='flex flex-row w-full text-left text-lg items-center'>
+                                <img src={chargingStationIcon} alt="Icon" style={{ width: '20px', marginRight: '5px' }} />
+                                <div className='mx-2'>
+                                    Add Charging Station
+                                </div>
+                            </div>
                         </button>
-                        <button className="mx-10 mb-5 btn btn-outline btn-lg bg-blue-500 z-[4] text-white" onClick={() => slamMapRef.current.setIsModalOpen(true)}>Add Table</button>
-                        <Modal isOpen={slamMapRef.current.isModalOpen} onClose={() => slamMapRef.current.setIsModalOpen(false)} onSubmit={slamMapRef.current.addTable} />
-                        <button className='mx-10 mb-5 btn btn-outline btn-lg bg-purple-500 z-[4] text-white' onClick={() => slamMapRef.current.addRecycle()}>
-                            Add Recycle
+
+                        <button
+                            className="btn btn-ghost dark:text-[#DCEBFA]"
+                            onClick={() => slamMapRef.current.setIsModalOpen(true)}
+                        >
+                            <div className='flex flex-row w-full text-left text-lg items-center'>
+                                <img src={tableIcon} alt="Icon" style={{ width: '20px', marginRight: '5px' }} />
+                                <div className='mx-2'>
+                                    Add Table
+                                </div>
+                            </div>
                         </button>
-                        <button className='mx-10 mb-5 btn btn-outline btn-lg bg-orange-500 z-[4] text-white' onClick={() => slamMapRef.current.addReposition()}>
-                            Add Reposition
+
+                        <Modal
+                            isOpen={slamMapRef.current.isModalOpen}
+                            onClose={() => slamMapRef.current.setIsModalOpen(false)}
+                            onSubmit={slamMapRef.current.addTable}
+                        />
+
+                        <button
+                            className='btn btn-ghost dark:text-[#DCEBFA]'
+                            onClick={() => slamMapRef.current.addRecycle()}
+                        >
+                            <div className='flex flex-row w-full text-left text-lg items-center'>
+                                <img src={recycleIcon} alt="Icon" style={{ width: '20px', marginRight: '5px' }} />
+                                <div className='mx-2'>
+                                    Add Recycle
+                                </div>
+                            </div>
                         </button>
-                        <button className='mx-10 mb-5 btn btn-outline btn-lg bg-black z-[4] text-white' onClick={() => slamMapRef.current.deleteSelectedIcon()} disabled={!slamMapRef.current.selectedIcon}>
-                            Delete Selected Icon
+
+                        <button
+                            className='btn btn-ghost dark:text-[#DCEBFA]'
+                            onClick={() => slamMapRef.current.addReposition()}
+                        >
+                            <div className='flex flex-row w-full text-left text-lg items-center'>
+                                <img src={repositionIcon} alt="Icon" style={{ width: '20px', marginRight: '5px' }} />
+                                <div className='mx-2'>
+                                    Add Reposition
+                                </div>
+                            </div>
                         </button>
-                        <button className='mx-10 mb-5 btn btn-outline btn-lg bg-green-500 z-[4] text-white' onClick={() => slamMapRef.current.handleSaveIconPositions()}>
-                            Save All Icon Positions
+
+                        <button
+                            className='btn btn-ghost dark:text-[#DCEBFA]'
+                            onClick={() => slamMapRef.current.deleteSelectedIcon()}
+                            disabled={!slamMapRef.current.selectedIcon}
+                        >
+                            <div className='flex flex-row w-full text-left text-lg items-center'>
+                                <FontAwesomeIcon icon={faDeleteLeft} />
+                                <div className='mx-2'>
+                                    Delete Selected Icon
+                                </div>
+                            </div>
                         </button>
-                        <button className='mx-10 mb-5 btn btn-outline btn-lg bg-indigo-500 z-[4] text-white' onClick={() => slamMapRef.current.setIsSettingOrientation(true)} disabled={!slamMapRef.current.selectedIcon}>
-                            Set Orientation
+
+                        <button
+                            className='btn btn-ghost dark:text-[#DCEBFA]'
+                            onClick={() => slamMapRef.current.handleSaveIconPositions()}
+                        >
+                            <div className='flex flex-row w-full text-left text-lg items-center'>
+                                <FontAwesomeIcon icon={faSave} />
+                                <div className='mx-2'>
+                                    Save All Icon Positions
+                                </div>
+                            </div>
+                        </button>
+
+                        <button
+                            className='btn btn-ghost dark:text-[#DCEBFA]'
+                            onClick={() => slamMapRef.current.setIsSettingOrientation(true)}
+                            disabled={!slamMapRef.current.selectedIcon}
+                        >
+                            <div className='flex flex-row w-full text-left text-lg items-center'>
+                            <FontAwesomeIcon icon={faCircle} />
+                                <div className='mx-2'>
+                                    Set Orientation
+                                </div>
+                            </div>
                         </button>
                     </div>
                 )}
