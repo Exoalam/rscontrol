@@ -7,10 +7,16 @@ import JoyStickControl from './JoyStickControl';
 
 const MasterController = () => {
     const [isDrawerOpen, setIsDrawerOpen] = useState(true);
+    const [showControl, setShowControl] = useState(false);
 
     const toggleDrawer = () => {
         setIsDrawerOpen(!isDrawerOpen);
     };
+
+    const toggleControl = (value) => {
+        setShowControl(value);
+        toggleDrawer();
+    }
 
     return (
         <div className="flex flex-col min-h-screen lg:flex-row bg-[#14181C]">
@@ -26,12 +32,13 @@ const MasterController = () => {
                     <div className="divider"></div>
                     <ConnectDevice inputDesign={"input input-bordered input-ghost w-[80%] max-w-xs dark:bg-[#14181C]"} autoConnect={true} />
                     <div className="divider"></div>
-                    <ConfirmationButton onClick={() => console.log('Initialization')} label="Initialization" modalTitle="Initialization" modalDescription="Are you sure you want to Initialization?" btn_class='btn btn-ghost dark:text-[#DCEBFA]' text_dt='flex flex-row w-full text-left text-lg items-center' icond={faWandMagicSparkles} />
-                    <ConfirmationButton onClick={() => console.log('Control')} label="Control" modalTitle="Control" modalDescription="Are you sure you want to Control?" btn_class='btn btn-ghost dark:text-[#DCEBFA]' text_dt='flex flex-row w-full text-left text-lg items-center' icond={faRobot} />
+                    <ConfirmationButton onClick={() => toggleControl(false)} label="Initialization" modalTitle="Initialization" modalDescription="Are you sure you want to Initialization?" btn_class='btn btn-ghost dark:text-[#DCEBFA]' text_dt='flex flex-row w-full text-left text-lg items-center' icond={faWandMagicSparkles} />
+                    <ConfirmationButton onClick={() => toggleControl(true)} label="Control" modalTitle="Control" modalDescription="Are you sure you want to Control?" btn_class='btn btn-ghost dark:text-[#DCEBFA]' text_dt='flex flex-row w-full text-left text-lg items-center' icond={faRobot} />
                     <div className="divider"></div>
                 </div>
             </div>
             <div className="grid w-full lg:w-1/6 card bg-[#1E2328] rounded-box place-items-center my-2 mx-2 shadow-xl p-4">
+                {!showControl && (
                 <div className="flex flex-col w-full h-full pt-4">
                     <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold dark:text-[#6AFFDC] my-2">Initialization</h2>
                     <div className="divider"></div>
@@ -141,7 +148,7 @@ const MasterController = () => {
                     </ul>
                     <div className="divider"></div>
                     <JoyStickControl />
-                </div>
+                </div>)}
             </div>
             <div className="grid w-full lg:w-4/6 card bg-[#1E2328] rounded-box place-items-center my-2 mx-1 shadow-xl p-4">
                 content
