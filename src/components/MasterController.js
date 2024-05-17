@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { faRobot, faWandMagicSparkles, faBars, faTimes, faUpload, faMapMarkerAlt, faMapLocationDot, faDownload, faKitchenSet, faDumpster, faBatteryHalf, faChair, faLocationCrosshairs, faCircleStop, faMap} from '@fortawesome/free-solid-svg-icons';
+import React, { useState, useRef } from 'react';
+import { faRobot, faWandMagicSparkles, faBars, faTimes, faUpload, faMapMarkerAlt, faMapLocationDot, faDownload, faKitchenSet, faDumpster, faBatteryHalf, faChair, faLocationCrosshairs, faCircleStop, faMap } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import ConnectDevice from './ConnectDevice';
 import ConfirmationButton from './ConfirmationButton';
@@ -7,11 +7,34 @@ import JoyStickControl from './JoyStickControl';
 import SlamMapVisualization from './Mapping';
 import ROSLIB from 'roslib';
 
-
+const Modal = ({ isOpen, onClose, onSubmit }) => {
+    const [tableNumber, setTableNumber] = useState('');
+  
+    return (
+      isOpen && (
+        <div className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg">Enter Table Number</h3>
+            <input
+              type="text"
+              placeholder="Table number"
+              className="input input-bordered w-full max-w-xs"
+              value={tableNumber}
+              onChange={(e) => setTableNumber(e.target.value)}
+            />
+            <div className="modal-action">
+              <button className="btn" onClick={() => onSubmit(tableNumber)}>Submit</button>
+              <button className="btn" onClick={onClose}>Close</button>
+            </div>
+          </div>
+        </div>
+      )
+    );
+  };
 const MasterController = () => {
     const [isDrawerOpen, setIsDrawerOpen] = useState(true);
     const [showControl, setShowControl] = useState(false);
-
+    const slamMapRef = useRef();
     const toggleDrawer = () => {
         setIsDrawerOpen(!isDrawerOpen);
     };
@@ -24,45 +47,45 @@ const MasterController = () => {
     const [ros, setRos] = useState(null);
     const [map, setMap] = useState(null);
     const [isEditingMap, setIsEditingMap] = useState(false);
-  
+
     const handleEditMap = () => {
-      setIsEditingMap(!isEditingMap);
+        setIsEditingMap(!isEditingMap);
     };
-  
+
     const sendCommand = (command, map = 0) => {
-      if (map === 1) {
-        setMap('map1')
-        command = 'create map'
-      }
-      if (map === 2) {
-        setMap('map2')
-        command = 'create map'
-      }
-      if (map === 3) {
-        setMap('map3')
-        command = 'create map'
-      }
-  
-      if (!ros || !ros.isConnected) {
-        console.log('ROS is not connected.');
-        return;
-      }
-      const commandTopic = new ROSLIB.Topic({
-        ros: ros,
-        name: '/command_center',
-        messageType: 'std_msgs/String'
-      });
+        if (map === 1) {
+            setMap('map1')
+            command = 'create map'
+        }
+        if (map === 2) {
+            setMap('map2')
+            command = 'create map'
+        }
+        if (map === 3) {
+            setMap('map3')
+            command = 'create map'
+        }
 
-      const message = new ROSLIB.Message({
-        data: command
-      });
+        if (!ros || !ros.isConnected) {
+            console.log('ROS is not connected.');
+            return;
+        }
+        const commandTopic = new ROSLIB.Topic({
+            ros: ros,
+            name: '/command_center',
+            messageType: 'std_msgs/String'
+        });
 
-      commandTopic.publish(message);
-      console.log(`Command sent: ${command}`);
+        const message = new ROSLIB.Message({
+            data: command
+        });
+
+        commandTopic.publish(message);
+        console.log(`Command sent: ${command}`);
     };
-  
+
     const handleLoadMap = (value) => {
-      sendCommand('load map' + value)
+        sendCommand('load map' + value)
     }
 
     return (
@@ -77,7 +100,7 @@ const MasterController = () => {
                     </button>
                     <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold dark:text-[#6AFFDC] my-2">RestoBotics</h2>
                     <div className="divider"></div>
-                    <ConnectDevice inputDesign={"input input-bordered input-ghost w-[80%] max-w-xs dark:bg-[#14181C]"} autoConnect={true} onConnect={setRos}/>
+                    <ConnectDevice inputDesign={"input input-bordered input-ghost w-[80%] max-w-xs dark:bg-[#14181C]"} autoConnect={true} onConnect={setRos} />
                     <div className="divider"></div>
                     <ConfirmationButton onClick={() => toggleControl(false)} label="Initialization" modalTitle="Initialization" modalDescription="Are you sure you want to Initialization?" btn_class='btn btn-ghost dark:text-[#DCEBFA]' text_dt='flex flex-row w-full text-left text-lg items-center' icond={faWandMagicSparkles} />
                     <ConfirmationButton onClick={() => toggleControl(true)} label="Control" modalTitle="Control" modalDescription="Are you sure you want to Control?" btn_class='btn btn-ghost dark:text-[#DCEBFA]' text_dt='flex flex-row w-full text-left text-lg items-center' icond={faRobot} />
@@ -134,15 +157,15 @@ const MasterController = () => {
                                 <ConfirmationButton
                                     onClick={() => {
                                         if (map === 'map1') {
-                                          sendCommand('save map1')
+                                            sendCommand('save map1')
                                         }
                                         else if (map === 'map2') {
-                                          sendCommand('save map2')
+                                            sendCommand('save map2')
                                         }
                                         else if (map === 'map3') {
-                                          sendCommand('save map3')
+                                            sendCommand('save map3')
                                         }
-                                      }}
+                                    }}
                                     label="Save Map"
                                     modalTitle="Save Map"
                                     modalDescription="Are you sure you want to Save Map?"
@@ -280,11 +303,37 @@ const MasterController = () => {
                         />
                     </div>)}
             </div>
-            <div className="grid w-full lg:w-4/6 card bg-[#1E2328] rounded-box place-items-center my-2 mx-1 shadow-xl p-4">
-                <SlamMapVisualization ros={ros} isEditingMap={isEditingMap} handleEditMap={handleEditMap}/>
+            <div className="grid lg:w-4/6 card bg-[#1E2328] rounded-box place-items-center my-2 mx-1 shadow-xl p-4">
+                <SlamMapVisualization ref={slamMapRef} ros={ros} isEditingMap={isEditingMap} handleEditMap={handleEditMap} />
             </div>
             <div className="grid w-full lg:w-1/6 card bg-[#1E2328] rounded-box place-items-center my-2 mx-2 shadow-xl p-4">
-                content
+                {isEditingMap && (
+                    <div className='' style={{ display: 'flex', flexDirection: 'column' }}>
+                        <button className='mx-10 mb-5 btn btn-outline btn-lg bg-red-500 z-[4] text-white' onClick={() => slamMapRef.current.addKitchen()}>
+                            Add Kitchen
+                        </button>
+                        <button className='mx-10 mb-5 btn btn-outline btn-lg bg-blue-500 z-[4] text-white' onClick={() => slamMapRef.current.addChargingStation()}>
+                            Add Charging Station
+                        </button>
+                        <button className="mx-10 mb-5 btn btn-outline btn-lg bg-blue-500 z-[4] text-white" onClick={() => slamMapRef.current.setIsModalOpen(true)}>Add Table</button>
+                        <Modal isOpen={slamMapRef.current.isModalOpen} onClose={() => slamMapRef.current.setIsModalOpen(false)} onSubmit={slamMapRef.current.addTable} />
+                        <button className='mx-10 mb-5 btn btn-outline btn-lg bg-purple-500 z-[4] text-white' onClick={() => slamMapRef.current.addRecycle()}>
+                            Add Recycle
+                        </button>
+                        <button className='mx-10 mb-5 btn btn-outline btn-lg bg-orange-500 z-[4] text-white' onClick={() => slamMapRef.current.addReposition()}>
+                            Add Reposition
+                        </button>
+                        <button className='mx-10 mb-5 btn btn-outline btn-lg bg-black z-[4] text-white' onClick={() => slamMapRef.current.deleteSelectedIcon()} disabled={!slamMapRef.current.selectedIcon}>
+                            Delete Selected Icon
+                        </button>
+                        <button className='mx-10 mb-5 btn btn-outline btn-lg bg-green-500 z-[4] text-white' onClick={() => slamMapRef.current.handleSaveIconPositions()}>
+                            Save All Icon Positions
+                        </button>
+                        <button className='mx-10 mb-5 btn btn-outline btn-lg bg-indigo-500 z-[4] text-white' onClick={() => slamMapRef.current.setIsSettingOrientation(true)} disabled={!slamMapRef.current.selectedIcon}>
+                            Set Orientation
+                        </button>
+                    </div>
+                )}
             </div>
             <button
                 className="fixed top-4 left-4 btn btn-ghost dark:text-[#DCEBFA] z-50"

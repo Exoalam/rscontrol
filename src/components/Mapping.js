@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import ROSLIB from 'roslib';
 import iconPositions from '../icon_positions.json';
 
@@ -34,7 +34,7 @@ const Modal = ({ isOpen, onClose, onSubmit }) => {
   );
 };
 
-const SlamMapVisualization = ({ ros, isEditingMap, handleEditMap }) => {
+const SlamMapVisualization = forwardRef(({ ros, isEditingMap, handleEditMap }, ref) => {
   const mapCanvasRef = useRef(null);
   const robotCanvasRef = useRef(null);
   const iconsCanvasRef = useRef(null);
@@ -68,7 +68,18 @@ const SlamMapVisualization = ({ ros, isEditingMap, handleEditMap }) => {
   const [loadedIcons, setLoadedIcons] = useState([]);
   const [laserDistance, setLaserDistance] = useState(0);
 
-
+  useImperativeHandle(ref, () => ({
+    addKitchen,
+    addChargingStation,
+    addTable,
+    addRecycle,
+    addReposition,
+    deleteSelectedIcon,
+    handleSaveIconPositions,
+    setIsModalOpen,
+    setIsSettingOrientation,
+    selectedIcon,
+  }));
 
   // Mouse handlers for panning
   const handleMouseDown = (e) => {
@@ -444,6 +455,7 @@ const SlamMapVisualization = ({ ros, isEditingMap, handleEditMap }) => {
   const drawMap = (message) => {
     const canvas = mapCanvasRef.current;
     if (!canvas || !message) return;
+
     const context = canvas.getContext('2d');
     const { data, info } = message;
     const { width, height, origin } = info;
@@ -455,11 +467,32 @@ const SlamMapVisualization = ({ ros, isEditingMap, handleEditMap }) => {
     // Loop to fill imageData...
     for (let i = 0; i < data.length; i++) {
       const value = data[i];
-      const color = value === 100 ? 0 : value === -1 ? 127 : 255;
+      let color;
+
+      switch (value) {
+        case 100:
+          color = '#14181C';
+
+          break;
+        case -1:
+          color = '#1E2328';
+          break;
+        case 0:
+          color = '#DCEBFA';
+          break;
+        default:
+          color = '#6AFFDC';
+      }
+
       const index = i * 4;
-      imageData.data[index] = color;
-      imageData.data[index + 1] = color;
-      imageData.data[index + 2] = color;
+      const hexColor = parseInt(color.slice(1), 16);
+      const r = (hexColor >> 16) & 255;
+      const g = (hexColor >> 8) & 255;
+      const b = hexColor & 255;
+
+      imageData.data[index] = r;
+      imageData.data[index + 1] = g;
+      imageData.data[index + 2] = b;
       imageData.data[index + 3] = 255;
     }
 
@@ -471,7 +504,7 @@ const SlamMapVisualization = ({ ros, isEditingMap, handleEditMap }) => {
 
     context.save();
     context.scale(zoomLevel * 2, zoomLevel * 2);
-    context.translate(panOffset.x / zoomLevel * .5, panOffset.y / zoomLevel * .5);
+    context.translate(panOffset.x / zoomLevel * 0.5, panOffset.y / zoomLevel * 0.5);
     context.drawImage(offscreenCanvas, 0, 0);
     context.restore();
   };
@@ -479,24 +512,24 @@ const SlamMapVisualization = ({ ros, isEditingMap, handleEditMap }) => {
   const drawRobot = () => {
     const canvas = robotCanvasRef.current;
     if (!canvas || !robotPosition) return;
-  
+
     const context = canvas.getContext('2d');
     context.clearRect(0, 0, canvas.width, canvas.height);
-  
+
     const scale = 40;
     const posX = robotPosition.x * scale + canvas.width / 2;
     const posY = robotPosition.y * scale + canvas.height / 2;
-  
+
     const orientation = robotPosition.orientation;
     const theta = Math.atan2(
       2 * (orientation.w * orientation.z + orientation.x * orientation.y),
       1 - 2 * (orientation.y * orientation.y + orientation.z * orientation.z)
     );
-  
+
     const robotSize = 20; // Adjust the size as needed
     const robotImage = new Image();
     robotImage.src = robotIcon;
-  
+
     context.save();
     context.translate(panOffset.x, panOffset.y);
     context.scale(zoomLevel, zoomLevel);
@@ -510,7 +543,7 @@ const SlamMapVisualization = ({ ros, isEditingMap, handleEditMap }) => {
       robotSize
     );
     context.restore();
-  
+
     drawIcons();
   };
   const drawIcons = () => {
@@ -518,25 +551,25 @@ const SlamMapVisualization = ({ ros, isEditingMap, handleEditMap }) => {
     if (!canvas) return;
     const context = canvas.getContext('2d');
     context.clearRect(0, 0, canvas.width, canvas.height);
-  
+
     context.save();
     context.translate(panOffset.x, panOffset.y);
     context.scale(zoomLevel, zoomLevel);
-  
+
     // Common function to draw each icon
     const drawIcon = (icon, iconImage) => {
       const size = 30; // Adjust the size as needed
-  
+
       const iconImg = new Image();
       iconImg.src = iconImage;
-  
+
       context.save();
       context.translate(icon.x, icon.y);
       context.rotate(icon.orientation);
       context.drawImage(iconImg, -size / 2, -size / 2, size, size);
       context.restore();
     };
-  
+
     // Draw each type of icon
     kitchens.forEach(icon => drawIcon(icon, kitchenIcon));
     chargingStations.forEach(icon => drawIcon(icon, chargingStationIcon));
@@ -689,7 +722,7 @@ const SlamMapVisualization = ({ ros, isEditingMap, handleEditMap }) => {
       // Merge loaded icons into the respective arrays
       loadedIcons.forEach(({ type, x, y, orientation, number }) => {
         const icon = { id: Date.now(), x, y, orientation };
-  
+
         let iconImage;
         switch (type) {
           case 'kitchen':
@@ -718,62 +751,53 @@ const SlamMapVisualization = ({ ros, isEditingMap, handleEditMap }) => {
       });
     }
   }, [loadedIcons]);
+  const getIconHandlers = () => {
+    return {
+      addKitchen,
+      addChargingStation,
+      addTable,
+      addRecycle,
+      addReposition,
+      deleteSelectedIcon,
+      handleSaveIconPositions,
+      setIsModalOpen,
+      setIsSettingOrientation,
+      selectedIcon,
+    };
+  };
+
 
   return (
-    <div className='row'>
-      <div ref={containerRef} style={{ position: 'relative', width: '100%', height: '100%' }}> {/* Add ref to container */}
-        <canvas
-          ref={mapCanvasRef}
-          width={800}
-          height={800}
-          style={{ position: 'absolute', left: 0, top: 0, zIndex: 1 }}
-        />
-        <canvas
-          ref={robotCanvasRef}
-          width={800}
-          height={800}
-          style={{ position: 'absolute', left: 0, top: 0, zIndex: 3 }}
-        />
-        <canvas
-          ref={iconsCanvasRef}
-          width={800}
-          height={800}
-          style={{ position: 'absolute', left: 0, top: 0, zIndex: 2 }}
-        />
-
+    <div className='row bg-[#1E2328] w-full h-full'>
+      <div className='col h-full'>
+        <div ref={containerRef} style={{ width: '66%', height: '94%', position: 'relative', border: 'solid white 1px', borderRadius: '10px' }}>
+          <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+            <canvas
+              ref={mapCanvasRef}
+              width={800}
+              height={800}
+              style={{ position: 'absolute', left: 0, top: 0, zIndex: 1 }}
+            />
+            <canvas
+              ref={robotCanvasRef}
+              width={800}
+              height={800}
+              style={{ position: 'absolute', left: 0, top: 0, zIndex: 3 }}
+            />
+            <canvas
+              ref={iconsCanvasRef}
+              width={800}
+              height={800}
+              style={{ position: 'absolute', left: 0, top: 0, zIndex: 2 }}
+            />
+          </div>
+        </div>
+        <div style={{ margin: '10px', fontSize: '34px' }} className="laser-distance">
+          <p className='text-white'>Laser Distance: {laserDistance} m</p>
+        </div>
       </div>
-      <div style={{ margin: '10px', fontSize: '34px' }} className="laser-distance">
-        <p className='text-white'>Laser Distance: {laserDistance} m</p>
-      </div>
-      {isEditingMap && (
-        <div className='my-10 z-[5]' style={{ display: 'flex', flexDirection: 'column' }}>
-          <button className='mx-10 mb-5 btn btn-outline btn-lg bg-red-500 z-[4] text-white' onClick={addKitchen}>
-            Add Kitchen
-          </button>
-          <button className='mx-10 mb-5 btn btn-outline btn-lg bg-blue-500 z-[4] text-white' onClick={addChargingStation}>
-            Add Charging Station
-          </button>
-          <button className="mx-10 mb-5 btn btn-outline btn-lg bg-blue-500 z-[4] text-white" onClick={() => setIsModalOpen(true)}>Add Table</button>
-          <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={addTable} />
-          <button className='mx-10 mb-5 btn btn-outline btn-lg bg-purple-500 z-[4] text-white' onClick={addRecycle}>
-            Add Recycle
-          </button>
-          <button className='mx-10 mb-5 btn btn-outline btn-lg bg-orange-500 z-[4] text-white' onClick={addReposition}>
-            Add Reposition
-          </button>
-          <button className='mx-10 mb-5 btn btn-outline btn-lg bg-black z-[4] text-white' onClick={deleteSelectedIcon} disabled={!selectedIcon}>
-            Delete Selected Icon
-          </button>
-          <button className='mx-10 mb-5 btn btn-outline btn-lg bg-green-500 z-[4] text-white' onClick={handleSaveIconPositions}>
-            Save All Icon Positions
-          </button>
-          <button className='mx-10 mb-5 btn btn-outline btn-lg bg-indigo-500 z-[4] text-white' onClick={() => setIsSettingOrientation(true)} disabled={!selectedIcon}>
-            Set Orientation
-          </button>
-        </div>)}
-
     </div>
   );
-};
+});
 
-export default SlamMapVisualization;
+export default SlamMapVisualization; 
