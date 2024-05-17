@@ -36,3 +36,43 @@
     transform: rotate(360deg);
   }
 }
+
+@keyframes border-animation {
+  0% {
+    border-color: rgb(255, 0, 0);
+  }
+  33% {
+    border-color: rgb(0, 255, 0);
+  }
+  66% {
+    border-color: rgb(0, 0, 255);
+  }
+  100% {
+    border-color: rgb(255, 0, 0);
+  }
+}
+
+.border-animation {
+  animation: border-animation 5s linear infinite;
+}
+
+.horizontal-full {
+  width: 100%;
+}
+
+.vertical-full {
+  height: 100%;
+}
+
+.slide-out {
+  animation: slideOut 0.5s forwards;
+}
+
+@keyframes slideOut {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-100%);
+  }
+}
