@@ -9,31 +9,6 @@ import tableIcon from '../Icons/table.png';
 import recycleIcon from '../Icons/recycle-bin.png';
 import repositionIcon from '../Icons/reposition.png';
 
-const Modal = ({ isOpen, onClose, onSubmit }) => {
-  const [tableNumber, setTableNumber] = useState('');
-
-  return (
-    isOpen && (
-      <div className="modal modal-open">
-        <div className="modal-box">
-          <h3 className="font-bold text-lg">Enter Table Number</h3>
-          <input
-            type="text"
-            placeholder="Table number"
-            className="input input-bordered w-full max-w-xs"
-            value={tableNumber}
-            onChange={(e) => setTableNumber(e.target.value)}
-          />
-          <div className="modal-action">
-            <button className="btn" onClick={() => onSubmit(tableNumber)}>Submit</button>
-            <button className="btn" onClick={onClose}>Close</button>
-          </div>
-        </div>
-      </div>
-    )
-  );
-};
-
 const SlamMapVisualization = forwardRef(({ ros, isEditingMap, handleEditMap }, ref) => {
   const mapCanvasRef = useRef(null);
   const robotCanvasRef = useRef(null);
