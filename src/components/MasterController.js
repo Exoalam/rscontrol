@@ -6,6 +6,7 @@ import ConfirmationButton from './ConfirmationButton';
 import JoyStickControl from './JoyStickControl';
 import SlamMapVisualization from './Mapping';
 import ROSLIB from 'roslib';
+import { sendNavigationGoal, send2DPoseEstimate } from './TurtleBotControl'
 
 import robotIcon from '../Icons/robot.png';
 import kitchenIcon from '../Icons/cooking.png';
@@ -13,6 +14,7 @@ import chargingStationIcon from '../Icons/charger.png';
 import tableIcon from '../Icons/table.png';
 import recycleIcon from '../Icons/recycle-bin.png';
 import repositionIcon from '../Icons/reposition.png';
+import iconPositions from '../icon_positions.json';
 
 const Modal = ({ isOpen, onClose, onSubmit }) => {
     const [tableNumber, setTableNumber] = useState('');
@@ -41,6 +43,9 @@ const Modal = ({ isOpen, onClose, onSubmit }) => {
 const MasterController = () => {
     const [isDrawerOpen, setIsDrawerOpen] = useState(true);
     const [showControl, setShowControl] = useState(false);
+    const [isNavigationMode, setIsNavigationMode] = useState(false);
+    const [goal, setGoal] = useState(null);
+    const [tableNumbers, setTableNumbers] = useState([]);
     const slamMapRef = useRef();
     const toggleDrawer = () => {
         setIsDrawerOpen(!isDrawerOpen);
@@ -57,6 +62,86 @@ const MasterController = () => {
 
     const handleEditMap = () => {
         setIsEditingMap(!isEditingMap);
+    };
+
+    const getLocationCoords = (locationType) => {
+        const location = iconPositions.find(pos => pos.type === locationType);
+        return location ? { x: location.x, y: location.y, orientation: location.orientation } : null;
+    };
+
+    const handleNavigation = () => {
+        setIsNavigationMode(!isNavigationMode)
+    }
+
+    const kitchen_button = () => {
+        const coords = getLocationCoords('kitchen');
+        if (coords) setGoal(sendNavigationGoal(ros, (coords.x - 400) / 40, (coords.y - 400) / 40, coords.orientation));
+        console.log(coords)
+    }
+
+    const recycle_button = () => {
+        const coords = getLocationCoords('recycle');
+        if (coords) setGoal(sendNavigationGoal(ros, (coords.x - 400) / 40, (coords.y - 400) / 40, coords.orientation));
+    }
+
+    const charging_button = () => {
+        const coords = getLocationCoords('chargingStation');
+        if (coords) setGoal(sendNavigationGoal(ros, (coords.x - 400) / 40, (coords.y - 400) / 40, coords.orientation));
+    }
+
+    const reposition_button = () => {
+        const coords = getLocationCoords('reposition');
+        if (coords) setGoal(send2DPoseEstimate(ros, (coords.x - 400) / 40, (coords.y - 400) / 40, coords.orientation));
+    }
+
+    const handleDisconnect = () => {
+        ros.close()
+    };
+    const [selectedTable, setSelectedTable] = useState('1'); // Default to the first option
+
+    const handleSelectChange = (event) => {
+        setSelectedTable(event.target.value);
+    };
+
+    const handleMapClick = (mapX, mapY, goalTheta) => {
+
+        setGoal(sendNavigationGoal(ros, mapX, mapY, goalTheta));
+        setIsNavigationMode(false);
+
+    };
+
+
+    const table_button = () => {
+        const tableData = iconPositions.find(pos => pos.type === 'table' && pos.number === selectedTable);
+        if (tableData) {
+            setGoal(sendNavigationGoal(ros, (tableData.x - 400) / 40, (tableData.y - 400) / 40, tableData.orientation));
+        } else {
+            console.log("No table found with the selected number");
+        }
+    };
+
+    const stopRobot = () => {
+        const cmdVelTopic = new ROSLIB.Topic({
+            ros: ros, // Assuming 'ros' is your ROSLIB.Ros instance connected to your ROS backend
+            name: '/cmd_vel',
+            messageType: 'geometry_msgs/Twist'
+        });
+
+        const stopMessage = new ROSLIB.Message({
+            linear: {
+                x: 0,
+                y: 0,
+                z: 0
+            },
+            angular: {
+                x: 0,
+                y: 0,
+                z: 0
+            }
+        });
+        goal.cancel();
+        setGoal(null);
+        cmdVelTopic.publish(stopMessage);
     };
 
     const sendCommand = (command, map = 0) => {
@@ -234,7 +319,7 @@ const MasterController = () => {
                             </li>
                             <li>
                                 <ConfirmationButton
-                                    onClick={() => console.log('Reposition')}
+                                    onClick={() => reposition_button()}
                                     label="Reposition"
                                     modalTitle="Reposition"
                                     modalDescription="Are you sure you want to Reposition?"
@@ -252,7 +337,7 @@ const MasterController = () => {
                         <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold dark:text-[#6AFFDC] my-2">Control</h2>
                         <div className="divider"></div>
                         <ConfirmationButton
-                            onClick={() => console.log('Kitchen')}
+                            onClick={() => kitchen_button()}
                             label="Go to Kitchen"
                             modalTitle="Go to Kitchen"
                             modalDescription="Are you sure you want to Go to Kitchen?"
@@ -261,7 +346,7 @@ const MasterController = () => {
                             icond={faKitchenSet}
                         />
                         <ConfirmationButton
-                            onClick={() => console.log('Recycle')}
+                            onClick={() => recycle_button()}
                             label="Go to Recycle"
                             modalTitle="Go to Recycle"
                             modalDescription="Are you sure you want to Go to Recycle?"
@@ -270,7 +355,7 @@ const MasterController = () => {
                             icond={faDumpster}
                         />
                         <ConfirmationButton
-                            onClick={() => console.log('Charger')}
+                            onClick={() => charging_button()}
                             label="Go to Charger"
                             modalTitle="Go to Charger"
                             modalDescription="Are you sure you want to Go to Charger?"
@@ -279,7 +364,7 @@ const MasterController = () => {
                             icond={faBatteryHalf}
                         />
                         <ConfirmationButton
-                            onClick={() => console.log('Table')}
+                            onClick={() => table_button()}
                             label="Go to Table"
                             modalTitle="Go to Table"
                             modalDescription="Are you sure you want to Go to Table?"
@@ -288,7 +373,7 @@ const MasterController = () => {
                             icond={faChair}
                         />
                         <ConfirmationButton
-                            onClick={() => console.log('Custom')}
+                            onClick={() => handleNavigation()}
                             label="Custom Waypoint"
                             modalTitle="Custom Waypoint"
                             modalDescription="Are you sure you want to Go to Custom Waypoint?"
@@ -300,7 +385,7 @@ const MasterController = () => {
                         <JoyStickControl ros={ros} />
                         <div className='divider'></div>
                         <ConfirmationButton
-                            onClick={() => console.log('Stop')}
+                            onClick={() => stopRobot()}
                             label="Stop"
                             modalTitle="Stop"
                             modalDescription="Are you sure you want to stop?"
@@ -311,7 +396,7 @@ const MasterController = () => {
                     </div>)}
             </div>
             <div className="grid lg:w-4/6 card bg-[#1E2328] rounded-box place-items-center my-2 mx-1 shadow-xl p-4">
-                <SlamMapVisualization ref={slamMapRef} ros={ros} isEditingMap={isEditingMap} handleEditMap={handleEditMap} />
+                <SlamMapVisualization ref={slamMapRef} onMapClick={handleMapClick} isNavigationMode={isNavigationMode} ros={ros} isEditingMap={isEditingMap} handleEditMap={handleEditMap} />
             </div>
             <div className="grid w-full lg:w-1/6 card bg-[#1E2328] rounded-box place-items-center my-2 mx-2 shadow-xl p-4">
                 {isEditingMap && (

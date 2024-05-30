@@ -9,10 +9,11 @@ import tableIcon from '../Icons/table.png';
 import recycleIcon from '../Icons/recycle-bin.png';
 import repositionIcon from '../Icons/reposition.png';
 
-const SlamMapVisualization = forwardRef(({ ros, isEditingMap, handleEditMap }, ref) => {
+const SlamMapVisualization = forwardRef(({ ros, isEditingMap, handleEditMap, onMapClick, isNavigationMode }, ref) => {
   const mapCanvasRef = useRef(null);
   const robotCanvasRef = useRef(null);
   const iconsCanvasRef = useRef(null);
+  const arrowCanvasRef = useRef(null);
   const [robotPosition, setRobotPosition] = useState({
     x: 0,
     y: 0,
@@ -43,6 +44,11 @@ const SlamMapVisualization = forwardRef(({ ros, isEditingMap, handleEditMap }, r
   const [loadedIcons, setLoadedIcons] = useState([]);
   const [laserDistance, setLaserDistance] = useState(0);
 
+  const [isDrawingArrow, setIsDrawingArrow] = useState(false);
+  const [pannedArrowOrigin, setPannedArrowOrigin] = useState(null);
+  const [hasReachedArrowOrigin, setHasReachedArrowOrigin] = useState(false);
+
+
   useImperativeHandle(ref, () => ({
     addKitchen,
     addChargingStation,
@@ -58,27 +64,32 @@ const SlamMapVisualization = forwardRef(({ ros, isEditingMap, handleEditMap }, r
 
   // Mouse handlers for panning
   const handleMouseDown = (e) => {
-    const { clientX, clientY } = e;
-    setPanStart({ x: clientX - panOffset.x, y: clientY - panOffset.y });
-    setIsPanning(true);
+    if (!isNavigationMode) {
+      const { clientX, clientY } = e;
+      setPanStart({ x: clientX - panOffset.x, y: clientY - panOffset.y });
+      setIsPanning(true);
+    }
   };
 
   const handleMouseMove = (e) => {
-    if (!isPanning) return;
-    const { clientX, clientY } = e;
-    setPanOffset({
-      x: clientX - panStart.x,
-      y: clientY - panStart.y,
-    });
-    if (lastMapMessage) {
-      drawMap(lastMapMessage); // Redraw the map with the new pan offset
+    if (!isNavigationMode && isPanning) {
+      const { clientX, clientY } = e;
+      setPanOffset({
+        x: clientX - panStart.x,
+        y: clientY - panStart.y,
+      });
+      if (lastMapMessage) {
+        drawMap(lastMapMessage); // Redraw the map with the new pan offset
+      }
+      drawIcons(); // Redraw icons with new pan offset
     }
-    drawIcons(); // Redraw icons with new pan offset
   };
 
 
   const handleMouseUp = () => {
-    setIsPanning(false);
+    if (!isNavigationMode) {
+      setIsPanning(false);
+    }
   };
 
   const addKitchen = () => {
@@ -165,6 +176,98 @@ const SlamMapVisualization = forwardRef(({ ros, isEditingMap, handleEditMap }, r
           break;
       }
       setSelectedIcon(null);
+    }
+  };
+
+  const drawVector = (startX, startY, endX, endY) => {
+    const ctx = arrowCanvasRef.current.getContext('2d');
+    ctx.clearRect(0, 0, arrowCanvasRef.current.width, arrowCanvasRef.current.height);
+  
+    ctx.beginPath();
+    ctx.moveTo(startX + panOffset.x, startY + panOffset.y);
+    ctx.lineTo(endX + panOffset.x, endY + panOffset.y);
+  
+    const headlen = 10;
+    const dx = endX - startX;
+    const dy = endY - startY;
+    const angle = Math.atan2(dy, dx);
+    ctx.lineTo(endX + panOffset.x - headlen * Math.cos(angle - Math.PI / 6), endY + panOffset.y - headlen * Math.sin(angle - Math.PI / 6));
+    ctx.moveTo(endX + panOffset.x, endY + panOffset.y);
+    ctx.lineTo(endX + panOffset.x - headlen * Math.cos(angle + Math.PI / 6), endY + panOffset.y - headlen * Math.sin(angle + Math.PI / 6));
+  
+    ctx.strokeStyle = '#0000FF';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  };
+
+  const redrawArrow = () => {
+    if (isDrawingArrow && pannedArrowOrigin && !hasReachedArrowOrigin) {
+      const endX = pannedArrowOrigin.x + 50 * Math.cos(arrowAngle);
+      const endY = pannedArrowOrigin.y + 50 * Math.sin(arrowAngle);
+      drawVector(pannedArrowOrigin.x, pannedArrowOrigin.y, endX, endY);
+    } else {
+      const ctx = arrowCanvasRef.current.getContext('2d');
+      ctx.clearRect(0, 0, arrowCanvasRef.current.width, arrowCanvasRef.current.height);
+    }
+  };
+
+  const onCanvasMouseDown = (event) => {
+    if (isNavigationMode) {
+      const rect = mapCanvasRef.current.getBoundingClientRect();
+      const scaleX = mapCanvasRef.current.width / rect.width;
+      const scaleY = mapCanvasRef.current.height / rect.height;
+  
+      const canvasX = (event.clientX - rect.left) * scaleX;
+      const canvasY = (event.clientY - rect.top) * scaleY;
+  
+      setIsDrawingArrow(true);
+      setArrowOrigin({ x: canvasX, y: canvasY });
+      setPannedArrowOrigin({ x: canvasX - panOffset.x, y: canvasY - panOffset.y });
+      setArrowAngle(0);
+    }
+  };
+
+  const onCanvasMouseMove = (event) => {
+    if (!isDrawingArrow) return;
+  
+    const rect = mapCanvasRef.current.getBoundingClientRect();
+    const scaleX = mapCanvasRef.current.width / rect.width;
+    const scaleY = mapCanvasRef.current.height / rect.height;
+  
+    const canvasX = (event.clientX - rect.left) * scaleX;
+    const canvasY = (event.clientY - rect.top) * scaleY;
+  
+    const dx = canvasX - (pannedArrowOrigin.x + panOffset.x);
+    const dy = canvasY - (pannedArrowOrigin.y + panOffset.y);
+    const newAngle = Math.atan2(dy, dx);
+    setArrowAngle(newAngle);
+  };
+  const onCanvasMouseUp = () => {
+    if (!isDrawingArrow || !arrowOrigin) return;
+  
+    const scale = 40;
+    const mapX = (arrowOrigin.x - mapCanvasRef.current.width / 2) / scale;
+    const mapY = (arrowOrigin.y - mapCanvasRef.current.height / 2) / scale;
+  
+    setIsDrawingArrow(false);
+    setArrowAngle(0);
+    setHasReachedArrowOrigin(false);
+  
+    if (onMapClick) {
+      onMapClick(mapX, mapY, arrowAngle);
+    }
+  
+    redrawArrow();
+  };
+
+  const clearAndRedrawEverything = () => {
+    if (isDrawingArrow && arrowOrigin) {
+      const endX = arrowOrigin.x + 50 * Math.cos(arrowAngle);
+      const endY = arrowOrigin.y + 50 * Math.sin(arrowAngle);
+      drawVector(arrowOrigin.x, arrowOrigin.y, endX, endY);
+    } else if (!isDrawingArrow) {
+      const ctx = arrowCanvasRef.current.getContext('2d');
+      ctx.clearRect(0, 0, arrowCanvasRef.current.width, arrowCanvasRef.current.height);
     }
   };
 
@@ -741,6 +844,30 @@ const SlamMapVisualization = forwardRef(({ ros, isEditingMap, handleEditMap }, r
     };
   };
 
+  useEffect(() => {
+    if (arrowOrigin) {
+      setPannedArrowOrigin({ x: arrowOrigin.x - panOffset.x, y: arrowOrigin.y - panOffset.y });
+      redrawArrow();
+    }
+  }, [panOffset, arrowOrigin, arrowAngle]);
+
+  // useEffect(() => {
+  //   if (pannedArrowOrigin && robotPosition) {
+  //     const scale = 40;
+  //     const robotX = robotPosition.x * scale + mapCanvasRef.current.width / 2;
+  //     const robotY = robotPosition.y * scale + mapCanvasRef.current.height / 2;
+  
+  //     const distance = Math.sqrt(
+  //       Math.pow(robotX - (pannedArrowOrigin.x + panOffset.x), 2) +
+  //       Math.pow(robotY - (pannedArrowOrigin.y + panOffset.y), 2)
+  //     );
+  
+  //     if (distance < 10) {
+  //       setHasReachedArrowOrigin(true);
+  //       redrawArrow();
+  //     }
+  //   }
+  // }, [robotPosition, pannedArrowOrigin, panOffset]);
 
   return (
     <div className='row bg-[#1E2328] w-full h-full'>
@@ -758,6 +885,15 @@ const SlamMapVisualization = forwardRef(({ ros, isEditingMap, handleEditMap }, r
               width={800}
               height={800}
               style={{ position: 'absolute', left: 0, top: 0, zIndex: 3 }}
+            />
+            <canvas
+              ref={arrowCanvasRef}
+              width={800}
+              height={800}
+              style={{ position: 'absolute', left: 0, top: 0, zIndex: 4 }}
+              onMouseDown={onCanvasMouseDown}
+              onMouseMove={onCanvasMouseMove}
+              onMouseUp={onCanvasMouseUp}
             />
             <canvas
               ref={iconsCanvasRef}
