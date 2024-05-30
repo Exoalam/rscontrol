@@ -182,11 +182,11 @@ const SlamMapVisualization = forwardRef(({ ros, isEditingMap, handleEditMap, onM
   const drawVector = (startX, startY, endX, endY) => {
     const ctx = arrowCanvasRef.current.getContext('2d');
     ctx.clearRect(0, 0, arrowCanvasRef.current.width, arrowCanvasRef.current.height);
-  
+
     ctx.beginPath();
     ctx.moveTo(startX + panOffset.x, startY + panOffset.y);
     ctx.lineTo(endX + panOffset.x, endY + panOffset.y);
-  
+
     const headlen = 10;
     const dx = endX - startX;
     const dy = endY - startY;
@@ -194,7 +194,7 @@ const SlamMapVisualization = forwardRef(({ ros, isEditingMap, handleEditMap, onM
     ctx.lineTo(endX + panOffset.x - headlen * Math.cos(angle - Math.PI / 6), endY + panOffset.y - headlen * Math.sin(angle - Math.PI / 6));
     ctx.moveTo(endX + panOffset.x, endY + panOffset.y);
     ctx.lineTo(endX + panOffset.x - headlen * Math.cos(angle + Math.PI / 6), endY + panOffset.y - headlen * Math.sin(angle + Math.PI / 6));
-  
+
     ctx.strokeStyle = '#0000FF';
     ctx.lineWidth = 2;
     ctx.stroke();
@@ -216,10 +216,10 @@ const SlamMapVisualization = forwardRef(({ ros, isEditingMap, handleEditMap, onM
       const rect = mapCanvasRef.current.getBoundingClientRect();
       const scaleX = mapCanvasRef.current.width / rect.width;
       const scaleY = mapCanvasRef.current.height / rect.height;
-  
+
       const canvasX = (event.clientX - rect.left) * scaleX;
       const canvasY = (event.clientY - rect.top) * scaleY;
-  
+
       setIsDrawingArrow(true);
       setArrowOrigin({ x: canvasX, y: canvasY });
       setPannedArrowOrigin({ x: canvasX - panOffset.x, y: canvasY - panOffset.y });
@@ -229,14 +229,14 @@ const SlamMapVisualization = forwardRef(({ ros, isEditingMap, handleEditMap, onM
 
   const onCanvasMouseMove = (event) => {
     if (!isDrawingArrow) return;
-  
+
     const rect = mapCanvasRef.current.getBoundingClientRect();
     const scaleX = mapCanvasRef.current.width / rect.width;
     const scaleY = mapCanvasRef.current.height / rect.height;
-  
+
     const canvasX = (event.clientX - rect.left) * scaleX;
     const canvasY = (event.clientY - rect.top) * scaleY;
-  
+
     const dx = canvasX - (pannedArrowOrigin.x + panOffset.x);
     const dy = canvasY - (pannedArrowOrigin.y + panOffset.y);
     const newAngle = Math.atan2(dy, dx);
@@ -244,19 +244,19 @@ const SlamMapVisualization = forwardRef(({ ros, isEditingMap, handleEditMap, onM
   };
   const onCanvasMouseUp = () => {
     if (!isDrawingArrow || !arrowOrigin) return;
-  
+
     const scale = 40;
     const mapX = (arrowOrigin.x - mapCanvasRef.current.width / 2) / scale;
     const mapY = (arrowOrigin.y - mapCanvasRef.current.height / 2) / scale;
-  
+
     setIsDrawingArrow(false);
     setArrowAngle(0);
     setHasReachedArrowOrigin(false);
-  
+
     if (onMapClick) {
       onMapClick(mapX, mapY, arrowAngle);
     }
-  
+
     redrawArrow();
   };
 
@@ -272,197 +272,203 @@ const SlamMapVisualization = forwardRef(({ ros, isEditingMap, handleEditMap, onM
   };
 
   const handleCanvasMouseDown = (e) => {
-    if (isSettingOrientation) {
-      const canvas = iconsCanvasRef.current;
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      setArrowOrigin({ x, y });
-    } else {
-      const canvas = iconsCanvasRef.current;
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      const clickedKitchen = kitchens.find(
-        (icon) =>
-          x >= icon.x - 10 &&
-          x <= icon.x + 10 &&
-          y >= icon.y - 10 &&
-          y <= icon.y + 10
-      );
-
-      const clickedChargingStation = chargingStations.find(
-        (icon) =>
-          x >= icon.x - 10 &&
-          x <= icon.x + 20 &&
-          y >= icon.y - 10 &&
-          y <= icon.y + 20
-      );
-
-      const clickedTable = tables.find(
-        (icon) =>
-          x >= icon.x - 10 &&
-          x <= icon.x + 10 &&
-          y >= icon.y - 10 &&
-          y <= icon.y + 10
-      );
-
-      const clickedRecycle = recycles.find(
-        (icon) =>
-          x >= icon.x - 10 &&
-          x <= icon.x + 10 &&
-          y >= icon.y - 10 &&
-          y <= icon.y + 10
-      );
-
-      const clickedReposition = repositions.find(
-        (icon) =>
-          x >= icon.x - 10 &&
-          x <= icon.x + 10 &&
-          y >= icon.y - 10 &&
-          y <= icon.y + 10
-      );
-
-      if (clickedKitchen) {
-        setSelectedIcon({ ...clickedKitchen, type: 'kitchen' });
-        setIsDragging(true);
-        setDragOffset({ x: x - clickedKitchen.x, y: y - clickedKitchen.y });
-      } else if (clickedChargingStation) {
-        setSelectedIcon({ ...clickedChargingStation, type: 'chargingStation' });
-        setIsDragging(true);
-        setDragOffset({ x: x - clickedChargingStation.x, y: y - clickedChargingStation.y });
-      } else if (clickedTable) {
-        setSelectedIcon({ ...clickedTable, type: 'table' });
-        setIsDragging(true);
-        setDragOffset({ x: x - clickedTable.x, y: y - clickedTable.y });
-      } else if (clickedRecycle) {
-        setSelectedIcon({ ...clickedRecycle, type: 'recycle' });
-        setIsDragging(true);
-        setDragOffset({ x: x - clickedRecycle.x, y: y - clickedRecycle.y });
-      } else if (clickedReposition) {
-        setSelectedIcon({ ...clickedReposition, type: 'reposition' });
-        setIsDragging(true);
-        setDragOffset({ x: x - clickedReposition.x, y: y - clickedReposition.y });
+    if (isEditingMap) {
+      if (isSettingOrientation) {
+        const canvas = iconsCanvasRef.current;
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        setArrowOrigin({ x, y });
       } else {
-        setSelectedIcon(null);
-        setIsDragging(false);
+        const canvas = iconsCanvasRef.current;
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        const clickedKitchen = kitchens.find(
+          (icon) =>
+            x >= icon.x - 10 &&
+            x <= icon.x + 10 &&
+            y >= icon.y - 10 &&
+            y <= icon.y + 10
+        );
+
+        const clickedChargingStation = chargingStations.find(
+          (icon) =>
+            x >= icon.x - 10 &&
+            x <= icon.x + 20 &&
+            y >= icon.y - 10 &&
+            y <= icon.y + 20
+        );
+
+        const clickedTable = tables.find(
+          (icon) =>
+            x >= icon.x - 10 &&
+            x <= icon.x + 10 &&
+            y >= icon.y - 10 &&
+            y <= icon.y + 10
+        );
+
+        const clickedRecycle = recycles.find(
+          (icon) =>
+            x >= icon.x - 10 &&
+            x <= icon.x + 10 &&
+            y >= icon.y - 10 &&
+            y <= icon.y + 10
+        );
+
+        const clickedReposition = repositions.find(
+          (icon) =>
+            x >= icon.x - 10 &&
+            x <= icon.x + 10 &&
+            y >= icon.y - 10 &&
+            y <= icon.y + 10
+        );
+
+        if (clickedKitchen) {
+          setSelectedIcon({ ...clickedKitchen, type: 'kitchen' });
+          setIsDragging(true);
+          setDragOffset({ x: x - clickedKitchen.x, y: y - clickedKitchen.y });
+        } else if (clickedChargingStation) {
+          setSelectedIcon({ ...clickedChargingStation, type: 'chargingStation' });
+          setIsDragging(true);
+          setDragOffset({ x: x - clickedChargingStation.x, y: y - clickedChargingStation.y });
+        } else if (clickedTable) {
+          setSelectedIcon({ ...clickedTable, type: 'table' });
+          setIsDragging(true);
+          setDragOffset({ x: x - clickedTable.x, y: y - clickedTable.y });
+        } else if (clickedRecycle) {
+          setSelectedIcon({ ...clickedRecycle, type: 'recycle' });
+          setIsDragging(true);
+          setDragOffset({ x: x - clickedRecycle.x, y: y - clickedRecycle.y });
+        } else if (clickedReposition) {
+          setSelectedIcon({ ...clickedReposition, type: 'reposition' });
+          setIsDragging(true);
+          setDragOffset({ x: x - clickedReposition.x, y: y - clickedReposition.y });
+        } else {
+          setSelectedIcon(null);
+          setIsDragging(false);
+        }
       }
     }
   };
   const handleCanvasMouseMove = (e) => {
-    if (isSettingOrientation && arrowOrigin) {
-      const canvas = iconsCanvasRef.current;
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const dx = x - arrowOrigin.x;
-      const dy = y - arrowOrigin.y;
-      const newAngle = Math.atan2(dy, dx);
-      setArrowAngle(newAngle);
-      drawIcons();
-      drawArrow(arrowOrigin.x, arrowOrigin.y, newAngle);
-    } else if (isDragging) {
-      const canvas = iconsCanvasRef.current;
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left - dragOffset.x;
-      const y = e.clientY - rect.top - dragOffset.y;
+    if (isEditingMap) {
+      if (isSettingOrientation && arrowOrigin) {
+        const canvas = iconsCanvasRef.current;
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const dx = x - arrowOrigin.x;
+        const dy = y - arrowOrigin.y;
+        const newAngle = Math.atan2(dy, dx);
+        setArrowAngle(newAngle);
+        drawIcons();
+        drawArrow(arrowOrigin.x, arrowOrigin.y, newAngle);
+      } else if (isDragging) {
+        const canvas = iconsCanvasRef.current;
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left - dragOffset.x;
+        const y = e.clientY - rect.top - dragOffset.y;
 
-      if (selectedIcon.type === 'kitchen') {
-        setKitchens((prevKitchens) =>
-          prevKitchens.map((icon) =>
-            icon.id === selectedIcon.id ? { ...icon, x, y } : icon
-          )
-        );
-      } else if (selectedIcon.type === 'chargingStation') {
-        setChargingStations((prevChargingStations) =>
-          prevChargingStations.map((icon) =>
-            icon.id === selectedIcon.id ? { ...icon, x, y } : icon
-          )
-        );
-      } else if (selectedIcon.type === 'table') {
-        setTables((prevTables) =>
-          prevTables.map((icon) =>
-            icon.id === selectedIcon.id ? { ...icon, x, y } : icon
-          )
-        );
-      } else if (selectedIcon.type === 'recycle') {
-        setRecycles((prevRecycles) =>
-          prevRecycles.map((icon) =>
-            icon.id === selectedIcon.id ? { ...icon, x, y } : icon
-          )
-        );
-      } else if (selectedIcon.type === 'reposition') {
-        setRepositions((prevRepositions) =>
-          prevRepositions.map((icon) =>
-            icon.id === selectedIcon.id ? { ...icon, x, y } : icon
-          )
-        );
+        if (selectedIcon.type === 'kitchen') {
+          setKitchens((prevKitchens) =>
+            prevKitchens.map((icon) =>
+              icon.id === selectedIcon.id ? { ...icon, x, y } : icon
+            )
+          );
+        } else if (selectedIcon.type === 'chargingStation') {
+          setChargingStations((prevChargingStations) =>
+            prevChargingStations.map((icon) =>
+              icon.id === selectedIcon.id ? { ...icon, x, y } : icon
+            )
+          );
+        } else if (selectedIcon.type === 'table') {
+          setTables((prevTables) =>
+            prevTables.map((icon) =>
+              icon.id === selectedIcon.id ? { ...icon, x, y } : icon
+            )
+          );
+        } else if (selectedIcon.type === 'recycle') {
+          setRecycles((prevRecycles) =>
+            prevRecycles.map((icon) =>
+              icon.id === selectedIcon.id ? { ...icon, x, y } : icon
+            )
+          );
+        } else if (selectedIcon.type === 'reposition') {
+          setRepositions((prevRepositions) =>
+            prevRepositions.map((icon) =>
+              icon.id === selectedIcon.id ? { ...icon, x, y } : icon
+            )
+          );
+        }
       }
     }
   };
   const handleCanvasMouseUp = (e) => {
-    if (isSettingOrientation && arrowOrigin) {
-      const canvas = iconsCanvasRef.current;
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const dx = x - arrowOrigin.x;
-      const dy = y - arrowOrigin.y;
-      const newAngle = Math.atan2(dy, dx);
+    if (isEditingMap) {
+      if (isSettingOrientation && arrowOrigin) {
+        const canvas = iconsCanvasRef.current;
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const dx = x - arrowOrigin.x;
+        const dy = y - arrowOrigin.y;
+        const newAngle = Math.atan2(dy, dx);
 
-      if (selectedIcon) {
-        switch (selectedIcon.type) {
-          case 'kitchen':
-            setKitchens((prevKitchens) =>
-              prevKitchens.map((icon) =>
-                icon.id === selectedIcon.id ? { ...icon, orientation: newAngle } : icon
-              )
-            );
-            setSelectedIconOrientation(newAngle);
-            break;
-          case 'chargingStation':
-            setChargingStations((prevChargingStations) =>
-              prevChargingStations.map((icon) =>
-                icon.id === selectedIcon.id ? { ...icon, orientation: newAngle } : icon
-              )
-            );
-            setSelectedIconOrientation(newAngle);
-            break;
-          case 'table':
-            setTables((prevTables) =>
-              prevTables.map((icon) =>
-                icon.id === selectedIcon.id ? { ...icon, orientation: newAngle } : icon
-              )
-            );
-            setSelectedIconOrientation(newAngle);
-            break;
-          case 'recycle':
-            setRecycles((prevRecycles) =>
-              prevRecycles.map((icon) =>
-                icon.id === selectedIcon.id ? { ...icon, orientation: newAngle } : icon
-              )
-            );
-            setSelectedIconOrientation(newAngle);
-            break;
-          case 'reposition':
-            setRepositions((prevRepositions) =>
-              prevRepositions.map((icon) =>
-                icon.id === selectedIcon.id ? { ...icon, orientation: newAngle } : icon
-              )
-            );
-            setSelectedIconOrientation(newAngle);
-            break;
-          default:
-            break;
+        if (selectedIcon) {
+          switch (selectedIcon.type) {
+            case 'kitchen':
+              setKitchens((prevKitchens) =>
+                prevKitchens.map((icon) =>
+                  icon.id === selectedIcon.id ? { ...icon, orientation: newAngle } : icon
+                )
+              );
+              setSelectedIconOrientation(newAngle);
+              break;
+            case 'chargingStation':
+              setChargingStations((prevChargingStations) =>
+                prevChargingStations.map((icon) =>
+                  icon.id === selectedIcon.id ? { ...icon, orientation: newAngle } : icon
+                )
+              );
+              setSelectedIconOrientation(newAngle);
+              break;
+            case 'table':
+              setTables((prevTables) =>
+                prevTables.map((icon) =>
+                  icon.id === selectedIcon.id ? { ...icon, orientation: newAngle } : icon
+                )
+              );
+              setSelectedIconOrientation(newAngle);
+              break;
+            case 'recycle':
+              setRecycles((prevRecycles) =>
+                prevRecycles.map((icon) =>
+                  icon.id === selectedIcon.id ? { ...icon, orientation: newAngle } : icon
+                )
+              );
+              setSelectedIconOrientation(newAngle);
+              break;
+            case 'reposition':
+              setRepositions((prevRepositions) =>
+                prevRepositions.map((icon) =>
+                  icon.id === selectedIcon.id ? { ...icon, orientation: newAngle } : icon
+                )
+              );
+              setSelectedIconOrientation(newAngle);
+              break;
+            default:
+              break;
+          }
         }
+        setIsSettingOrientation(false);
+        setArrowOrigin(null);
+        setArrowAngle(0);
+        drawIcons();
+      } else {
+        setIsDragging(false);
       }
-      setIsSettingOrientation(false);
-      setArrowOrigin(null);
-      setArrowAngle(0);
-      drawIcons();
-    } else {
-      setIsDragging(false);
     }
   };
 
@@ -856,12 +862,12 @@ const SlamMapVisualization = forwardRef(({ ros, isEditingMap, handleEditMap, onM
   //     const scale = 40;
   //     const robotX = robotPosition.x * scale + mapCanvasRef.current.width / 2;
   //     const robotY = robotPosition.y * scale + mapCanvasRef.current.height / 2;
-  
+
   //     const distance = Math.sqrt(
   //       Math.pow(robotX - (pannedArrowOrigin.x + panOffset.x), 2) +
   //       Math.pow(robotY - (pannedArrowOrigin.y + panOffset.y), 2)
   //     );
-  
+
   //     if (distance < 10) {
   //       setHasReachedArrowOrigin(true);
   //       redrawArrow();
@@ -900,6 +906,7 @@ const SlamMapVisualization = forwardRef(({ ros, isEditingMap, handleEditMap, onM
               width={800}
               height={800}
               style={{ position: 'absolute', left: 0, top: 0, zIndex: 2 }}
+              
             />
           </div>
         </div>
