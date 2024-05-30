@@ -425,7 +425,7 @@ const MasterController = () => {
 
                         <button
                             className="btn btn-ghost dark:text-[#DCEBFA]"
-                            onClick={() => slamMapRef.current.setIsModalOpen(true)}
+                            onClick={() => {slamMapRef.current.setIsModalOpen(true)}}
                         >
                             <div className='flex flex-row w-full text-left text-lg items-center'>
                                 <img src={tableIcon} alt="Icon" style={{ width: '20px', marginRight: '5px' }} />
