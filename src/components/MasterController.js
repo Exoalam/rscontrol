@@ -47,6 +47,7 @@ const MasterController = () => {
     const [goal, setGoal] = useState(null);
     const [tableNumbers, setTableNumbers] = useState([]);
     const slamMapRef = useRef();
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const toggleDrawer = () => {
         setIsDrawerOpen(!isDrawerOpen);
     };
@@ -425,7 +426,7 @@ const MasterController = () => {
 
                         <button
                             className="btn btn-ghost dark:text-[#DCEBFA]"
-                            onClick={() => {slamMapRef.current.setIsModalOpen(true)}}
+                            onClick={() => {setIsModalOpen(true);}}
                         >
                             <div className='flex flex-row w-full text-left text-lg items-center'>
                                 <img src={tableIcon} alt="Icon" style={{ width: '20px', marginRight: '5px' }} />
@@ -436,8 +437,8 @@ const MasterController = () => {
                         </button>
 
                         <Modal
-                            isOpen={slamMapRef.current.isModalOpen}
-                            onClose={() => slamMapRef.current.setIsModalOpen(false)}
+                            isOpen={isModalOpen}
+                            onClose={() => setIsModalOpen(false)}
                             onSubmit={slamMapRef.current.addTable}
                         />
 
