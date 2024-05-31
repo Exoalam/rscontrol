@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { faRobot, faWandMagicSparkles, faBars, faTimes, faUpload, faMapMarkerAlt, faMapLocationDot, faDownload, faKitchenSet, faDumpster, faBatteryHalf, faChair, faLocationCrosshairs, faCircleStop, faMap, faSave, faDeleteLeft, faCircle } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import ConnectDevice from './ConnectDevice';
@@ -14,7 +14,6 @@ import chargingStationIcon from '../Icons/charger.png';
 import tableIcon from '../Icons/table.png';
 import recycleIcon from '../Icons/recycle-bin.png';
 import repositionIcon from '../Icons/reposition.png';
-import iconPositions from '../icon_positions.json';
 
 const Modal = ({ isOpen, onClose, onSubmit }) => {
     const [tableNumber, setTableNumber] = useState('');
@@ -48,6 +47,7 @@ const MasterController = () => {
     const [tableNumbers, setTableNumbers] = useState([]);
     const slamMapRef = useRef();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [iconPositions, setLoadedIcons] = useState([]);
     const toggleDrawer = () => {
         setIsDrawerOpen(!isDrawerOpen);
     };
@@ -180,6 +180,26 @@ const MasterController = () => {
     const handleLoadMap = (value) => {
         sendCommand('load map' + value)
     }
+    useEffect(() => {
+        if (ros) {
+          const iconPositionsTopic = new ROSLIB.Topic({
+            ros,
+            name: '/icon_positions_response',
+            messageType: 'std_msgs/String'
+          });
+
+      
+          iconPositionsTopic.subscribe((message) => {
+            const iconPositions = JSON.parse(message.data);
+            setLoadedIcons(iconPositions);
+          });
+      
+          return () => {
+            iconPositionsTopic.unsubscribe();
+          };
+        }
+      }, [ros]);
+    
 
     return (
         <div className="flex flex-col min-h-screen lg:flex-row bg-[#14181C]">

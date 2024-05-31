@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import ROSLIB from 'roslib';
-import iconPositions from '../icon_positions.json';
 
 import robotIcon from '../Icons/robot.png';
 import kitchenIcon from '../Icons/cooking.png';
@@ -47,7 +46,6 @@ const SlamMapVisualization = forwardRef(({ ros, isEditingMap, handleEditMap, onM
   const [isDrawingArrow, setIsDrawingArrow] = useState(false);
   const [pannedArrowOrigin, setPannedArrowOrigin] = useState(null);
   const [hasReachedArrowOrigin, setHasReachedArrowOrigin] = useState(false);
-
 
   useImperativeHandle(ref, () => ({
     addKitchen,
@@ -751,7 +749,6 @@ const SlamMapVisualization = forwardRef(({ ros, isEditingMap, handleEditMap, onM
     mapTopic.subscribe((message) => {
       setLastMapMessage(message);
       drawMap(message);
-      setLoadedIcons(iconPositions); // Load icons from icon_positions.json
     });
 
     const poseTopic = new ROSLIB.Topic({
@@ -771,16 +768,30 @@ const SlamMapVisualization = forwardRef(({ ros, isEditingMap, handleEditMap, onM
       setRobotPosition({ x, y, orientation });
     });
 
+    const iconPositionsTopic = new ROSLIB.Topic({
+      ros,
+      name: '/icon_positions_response',
+      messageType: 'std_msgs/String'
+    });
+
+    iconPositionsTopic.subscribe((message) => {
+      const iconPositions = JSON.parse(message.data);
+      setLoadedIcons(iconPositions);
+      
+    });
+
     return () => {
       mapTopic.unsubscribe();
       poseTopic.unsubscribe();
       laserScanTopic.unsubscribe();
+      iconPositionsTopic.unsubscribe();
     };
   }, [ros]);
 
   useEffect(() => {
     drawRobot();
   }, [robotPosition]);
+
 
   useEffect(() => {
     const container = containerRef.current; // Use container ref

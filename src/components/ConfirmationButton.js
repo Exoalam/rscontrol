@@ -22,7 +22,7 @@ const ConfirmationButton = ({ onClick, label, modalTitle, modalDescription, btn_
         onClick={handleButtonClick}
         className={btn_class}
       >
-        <div className={text_dt}><FontAwesomeIcon icon={icond} /><div className='mx-2'>{label}</div></div>
+        <div className={text_dt}>{icond && <FontAwesomeIcon icon={icond} />}<div className='mx-2'>{label}</div></div>
       </button>
       <div className={`modal ${showConfirmation ? 'modal-open' : ''}`}>
         <div className="modal-box">
