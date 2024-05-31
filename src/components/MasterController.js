@@ -182,24 +182,24 @@ const MasterController = () => {
     }
     useEffect(() => {
         if (ros) {
-          const iconPositionsTopic = new ROSLIB.Topic({
-            ros,
-            name: '/icon_positions_response',
-            messageType: 'std_msgs/String'
-          });
+            const iconPositionsTopic = new ROSLIB.Topic({
+                ros,
+                name: '/icon_positions_response',
+                messageType: 'std_msgs/String'
+            });
 
-      
-          iconPositionsTopic.subscribe((message) => {
-            const iconPositions = JSON.parse(message.data);
-            setLoadedIcons(iconPositions);
-          });
-      
-          return () => {
-            iconPositionsTopic.unsubscribe();
-          };
+
+            iconPositionsTopic.subscribe((message) => {
+                const iconPositions = JSON.parse(message.data);
+                setLoadedIcons(iconPositions);
+            });
+
+            return () => {
+                iconPositionsTopic.unsubscribe();
+            };
         }
-      }, [ros]);
-    
+    }, [ros]);
+
 
     return (
         <div className="flex flex-col min-h-screen lg:flex-row bg-[#14181C]">
@@ -384,15 +384,31 @@ const MasterController = () => {
                             text_dt='flex flex-row w-full text-left text-lg items-center'
                             icond={faBatteryHalf}
                         />
-                        <ConfirmationButton
-                            onClick={() => table_button()}
-                            label="Go to Table"
-                            modalTitle="Go to Table"
-                            modalDescription="Are you sure you want to Go to Table?"
-                            btn_class='btn btn-ghost dark:text-[#DCEBFA]'
-                            text_dt='flex flex-row w-full text-left text-lg items-center'
-                            icond={faChair}
-                        />
+                        <div className="flex items-center">
+                            <ConfirmationButton
+                                onClick={() => table_button()}
+                                label="Go to Table"
+                                modalTitle="Go to Table"
+                                modalDescription="Are you sure you want to Go to Table?"
+                                btn_class='btn btn-ghost dark:text-[#DCEBFA]'
+                                text_dt='flex flex-row w-full text-left text-lg items-center'
+                                icond={faChair}
+                            />
+                            <select
+                                className="select select-bordered w-[50%] max-w-xs dark:bg-[#14181C] dark:text-[#DCEBFA] dark:border-[#DCEBFA] dark:border-opacity-50 ml-2"
+                                value={selectedTable}
+                                onChange={handleSelectChange}
+                            >
+                                <option disabled value="">Select table</option>
+                                {iconPositions
+                                    .filter(pos => pos.type === 'table')
+                                    .map(table => (
+                                        <option key={table.number} value={table.number}>
+                                            {table.number}
+                                        </option>
+                                    ))}
+                            </select>
+                        </div>
                         <ConfirmationButton
                             onClick={() => handleNavigation()}
                             label="Custom Waypoint"
@@ -446,7 +462,7 @@ const MasterController = () => {
 
                         <button
                             className="btn btn-ghost dark:text-[#DCEBFA]"
-                            onClick={() => {setIsModalOpen(true);}}
+                            onClick={() => { setIsModalOpen(true); }}
                         >
                             <div className='flex flex-row w-full text-left text-lg items-center'>
                                 <img src={tableIcon} alt="Icon" style={{ width: '20px', marginRight: '5px' }} />
@@ -517,7 +533,7 @@ const MasterController = () => {
                             disabled={!slamMapRef.current.selectedIcon}
                         >
                             <div className='flex flex-row w-full text-left text-lg items-center'>
-                            <FontAwesomeIcon icon={faCircle} />
+                                <FontAwesomeIcon icon={faCircle} />
                                 <div className='mx-2'>
                                     Set Orientation
                                 </div>
