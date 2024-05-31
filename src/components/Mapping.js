@@ -8,6 +8,24 @@ import tableIcon from '../Icons/table.png';
 import recycleIcon from '../Icons/recycle-bin.png';
 import repositionIcon from '../Icons/reposition.png';
 
+const Modal = ({ isOpen, onClose, title, children }) => {
+  return (
+    isOpen && (
+      <div className="modal modal-open">
+        <div className="modal-box">
+          <h3 className="font-bold text-lg">{title}</h3>
+          <div className="py-4">{children}</div>
+          <div className="modal-action">
+            <button className="btn" onClick={onClose}>
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  );
+};
+
 const SlamMapVisualization = forwardRef(({ ros, isEditingMap, handleEditMap, onMapClick, isNavigationMode }, ref) => {
   const mapCanvasRef = useRef(null);
   const robotCanvasRef = useRef(null);
@@ -46,6 +64,63 @@ const SlamMapVisualization = forwardRef(({ ros, isEditingMap, handleEditMap, onM
   const [isDrawingArrow, setIsDrawingArrow] = useState(false);
   const [pannedArrowOrigin, setPannedArrowOrigin] = useState(null);
   const [hasReachedArrowOrigin, setHasReachedArrowOrigin] = useState(false);
+
+  const [selectedTable, setSelectedTable] = useState(null);
+  const [tableStatuses, setTableStatuses] = useState({});
+
+  const handleTableClick = (tableNumber) => {
+    setSelectedTable(tableNumber);
+    if (!tableStatuses[tableNumber]) {
+      setTableStatuses((prevStatuses) => ({
+        ...prevStatuses,
+        [tableNumber]: {
+          ordering: '00:00:10',
+          waiting: '00:00:00',
+          eating: '00:00:00',
+          eatingWaiting: '00:00:00',
+          empty: false,
+        },
+      }));
+      startTableStatusCountdown(tableNumber);
+    }
+  };
+
+  const startTableStatusCountdown = (tableNumber) => {
+    const countdownOrder = ['ordering', 'waiting', 'eating', 'eatingWaiting', 'empty'];
+    let currentIndex = 0;
+
+    const countdownInterval = setInterval(() => {
+      setTableStatuses((prevStatuses) => {
+        const updatedStatuses = { ...prevStatuses };
+        const currentStatus = countdownOrder[currentIndex];
+
+        if (currentStatus === 'empty') {
+          updatedStatuses[tableNumber].empty = true;
+          clearInterval(countdownInterval);
+        } else {
+          const [hours, minutes, seconds] = updatedStatuses[tableNumber][currentStatus].split(':');
+          let totalSeconds = parseInt(hours) * 3600 + parseInt(minutes) * 60 + parseInt(seconds);
+
+          if (totalSeconds > 0) {
+            totalSeconds--;
+            const updatedTime = `${Math.floor(totalSeconds / 3600)
+              .toString()
+              .padStart(2, '0')}:${Math.floor((totalSeconds % 3600) / 60)
+                .toString()
+                .padStart(2, '0')}:${(totalSeconds % 60).toString().padStart(2, '0')}`;
+            updatedStatuses[tableNumber][currentStatus] = updatedTime;
+          } else {
+            currentIndex++;
+            const nextStatus = countdownOrder[currentIndex];
+            updatedStatuses[tableNumber][nextStatus] = '00:00:10';
+          }
+        }
+
+        return updatedStatuses;
+      });
+    }, 1000);
+  };
+
 
   useImperativeHandle(ref, () => ({
     addKitchen,
@@ -270,7 +345,21 @@ const SlamMapVisualization = forwardRef(({ ros, isEditingMap, handleEditMap, onM
   };
 
   const handleCanvasMouseDown = (e) => {
-    if (isEditingMap) {
+    if (!isEditingMap) {
+      const canvas = iconsCanvasRef.current;
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const clickedTable = tables.find(
+        (icon) => x >= icon.x - 10 && x <= icon.x + 10 && y >= icon.y - 10 && y <= icon.y + 10
+      );
+
+      if (clickedTable) {
+        handleTableClick(clickedTable.number);
+      }
+    }
+    else {
       if (isSettingOrientation) {
         const canvas = iconsCanvasRef.current;
         const rect = canvas.getBoundingClientRect();
@@ -776,8 +865,10 @@ const SlamMapVisualization = forwardRef(({ ros, isEditingMap, handleEditMap, onM
 
     iconPositionsTopic.subscribe((message) => {
       const iconPositions = JSON.parse(message.data);
-      setLoadedIcons(iconPositions);
-      
+      if (loadedIcons.length === 0) {
+        setLoadedIcons(iconPositions);
+        console.log(iconPositions);
+      }
     });
 
     return () => {
@@ -786,7 +877,7 @@ const SlamMapVisualization = forwardRef(({ ros, isEditingMap, handleEditMap, onM
       laserScanTopic.unsubscribe();
       iconPositionsTopic.unsubscribe();
     };
-  }, [ros]);
+  }, [ros, loadedIcons]);
 
   useEffect(() => {
     drawRobot();
@@ -917,7 +1008,7 @@ const SlamMapVisualization = forwardRef(({ ros, isEditingMap, handleEditMap, onM
               width={800}
               height={800}
               style={{ position: 'absolute', left: 0, top: 0, zIndex: 2 }}
-              
+
             />
           </div>
         </div>
@@ -925,6 +1016,21 @@ const SlamMapVisualization = forwardRef(({ ros, isEditingMap, handleEditMap, onM
           <p className='text-white'>Laser Distance: {laserDistance} m</p>
         </div>
       </div>
+      <Modal
+        isOpen={selectedTable !== null}
+        onClose={() => setSelectedTable(null)}
+        title={`Table ${selectedTable} Status`}
+      >
+        {selectedTable && tableStatuses[selectedTable] && (
+          <div>
+            <p>Ordering: {tableStatuses[selectedTable].ordering}</p>
+            <p>Waiting: {tableStatuses[selectedTable].waiting}</p>
+            <p>Eating: {tableStatuses[selectedTable].eating}</p>
+            <p>Eating & Waiting: {tableStatuses[selectedTable].eatingWaiting}</p>
+            <p>Empty: {tableStatuses[selectedTable].empty ? 'Yes' : 'No'}</p>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 });
